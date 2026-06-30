@@ -1,0 +1,27 @@
+{
+  "name": "pi-gonka",
+  "version": "0.1.0",
+  "description": "Gonka.gg proxy provider for pi.dev",
+  "type": "module",
+  "keywords": ["pi-package"],
+  "license": "MIT",
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
+  "pi": {
+    "extensions": [
+      "./extensions/gonka.ts"
+    ]
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-ai": "*"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "^0.79.4",
+    "@earendil-works/pi-ai": "^0.79.4",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.0"
+  }
+}
