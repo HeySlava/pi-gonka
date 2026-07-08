@@ -1,4 +1,5 @@
 import type { ExtensionAPI, ProviderModelConfig } from "@earendil-works/pi-coding-agent";
+import type { AssistantMessage, TextContent, ThinkingContent } from "@earendil-works/pi-ai";
 import { AuthStorage, getAgentDir } from "@earendil-works/pi-coding-agent";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -12,6 +13,43 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 function getDisplayName(modelId: string): string {
 	return modelId.split("/").pop() ?? modelId;
+}
+
+function isAssistantMessage(msg: { role: string }): msg is AssistantMessage {
+	return msg.role === "assistant";
+}
+
+function parseThinkBlocks(text: string): (TextContent | ThinkingContent)[] {
+	const blocks: (TextContent | ThinkingContent)[] = [];
+	const regex = /<think>([\s\S]*?)<\/think>/g;
+	let lastIndex = 0;
+	let match: RegExpExecArray | null;
+
+	while ((match = regex.exec(text)) !== null) {
+		if (match.index > lastIndex) {
+			blocks.push({ type: "text", text: text.slice(lastIndex, match.index) });
+		}
+		blocks.push({ type: "thinking", thinking: match[1] });
+		lastIndex = regex.lastIndex;
+	}
+
+	if (lastIndex < text.length) {
+		blocks.push({ type: "text", text: text.slice(lastIndex) });
+	}
+
+	return blocks;
+}
+
+function transformThinkTags(message: AssistantMessage): AssistantMessage {
+	const newContent: AssistantMessage["content"] = [];
+	for (const block of message.content) {
+		if (block.type === "text") {
+			newContent.push(...parseThinkBlocks(block.text));
+		} else {
+			newContent.push(block);
+		}
+	}
+	return { ...message, content: newContent };
 }
 
 interface GonkaModel {
@@ -262,5 +300,13 @@ export default async function (pi: ExtensionAPI) {
 
 			ctx.ui.notify("Refreshed " + newCache.models.length + " Gonka models", "info");
 		},
+	});
+
+	pi.on("message_end", (event) => {
+		const message = event.message;
+		if (!isAssistantMessage(message) || message.provider !== PROVIDER_NAME) {
+			return { message };
+		}
+		return { message: transformThinkTags(message) };
 	});
 }
