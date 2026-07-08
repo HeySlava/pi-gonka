@@ -4,28 +4,13 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 const PROVIDER_NAME = "gonka";
-const BASE_URL = "https://proxy.gonka.gg/v1";
-const MODELS_URL = "https://proxy.gonka.gg/v1/models";
-const PRICING_URL = "https://proxy.gonka.gg/api/pricing";
-const CAPABILITIES_URL = "https://proxy.gonka.gg/api/models/capabilities";
+const BASE_URL = "https://api.proxy.gonka.gg/v1";
+const MODELS_URL = "https://api.proxy.gonka.gg/v1/models";
+const PRICING_URL = "https://api.proxy.gonka.gg/api/pricing";
+const CAPABILITIES_URL = "https://api.proxy.gonka.gg/api/models/capabilities";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-// Map Gonka model IDs to API model IDs for upstream providers
-const MODEL_ID_MAP: Record<string, string> = {
-	"moonshotai/Kimi-K2.6": "kimi-k2.6",
-	"moonshotai/Kimi-K2.5": "kimi-k2.5",
-	"moonshotai/Kimi-K2.7-code": "kimi-k2.7-code",
-	"MiniMaxAI/MiniMax-M2.7": "minimax-m2.7",
-	"zai-org/GLM-5.2-FP8": "glm-5.2-fp8",
-};
-
-function getApiModelId(gonkaId: string): string {
-	return MODEL_ID_MAP[gonkaId] ?? gonkaId;
-}
-
 function getDisplayName(modelId: string): string {
-	const mapped = MODEL_ID_MAP[modelId];
-	if (mapped) return mapped;
 	return modelId.split("/").pop() ?? modelId;
 }
 
@@ -160,12 +145,9 @@ function mergeModelData(models: GonkaModel[], pricing: GonkaPricing | null, capa
 	return models.map((model): ProviderModelConfig => {
 		const cap = capabilityMap.get(model.id);
 		const costPerMillion = pricingMap.get(model.id) ?? 0;
-		const apiModelId = getApiModelId(model.id);
-		const displayName = getDisplayName(model.id);
-
 		return {
-			id: apiModelId,
-			name: displayName,
+			id: model.id,
+			name: getDisplayName(model.id),
 			reasoning: cap?.supports_reasoning ?? false,
 			input: ["text"],
 			cost: {

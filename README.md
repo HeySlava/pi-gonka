@@ -6,9 +6,9 @@
 
 - Registers `gonka` as a pi provider.
 - Reads the API key from `~/.pi/agent/auth.json`.
-- Fetches the live model list from `https://proxy.gonka.gg/v1/models`.
-- Fetches live USD pricing from `https://proxy.gonka.gg/api/pricing`.
-- Fetches capabilities from `https://proxy.gonka.gg/api/models/capabilities`.
+- Fetches the live model list from `https://api.proxy.gonka.gg/v1/models`.
+- Fetches live USD pricing from `https://api.proxy.gonka.gg/api/pricing`.
+- Fetches capabilities from `https://api.proxy.gonka.gg/api/models/capabilities`.
 - Caches everything in `~/.pi/agent/gonka-cache.json` for 24 hours.
 - Updates automatically on startup when the cache is stale.
 - Provides `/gonka-refresh` to force an immediate refresh.
