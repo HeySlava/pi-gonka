@@ -1,6 +1,6 @@
 import type { ExtensionAPI, ProviderModelConfig } from "@earendil-works/pi-coding-agent";
 import type { AssistantMessage, TextContent, ThinkingContent } from "@earendil-works/pi-ai";
-import { AuthStorage, getAgentDir } from "@earendil-works/pi-coding-agent";
+import { readStoredCredential, getAgentDir } from "@earendil-works/pi-coding-agent";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
@@ -13,6 +13,14 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 function getDisplayName(modelId: string): string {
 	return modelId.split("/").pop() ?? modelId;
+}
+
+function getApiKey(provider: string): string | undefined {
+	const credential = readStoredCredential(provider);
+	if (credential?.type === "api_key") {
+		return credential.key;
+	}
+	return undefined;
 }
 
 function isAssistantMessage(msg: { role: string }): msg is AssistantMessage {
@@ -265,14 +273,7 @@ function registerGonkaProvider(pi: ExtensionAPI, apiKey: string | undefined, mod
 }
 
 export default async function (pi: ExtensionAPI) {
-	const authStorage = AuthStorage.create();
-	let apiKey: string | undefined;
-
-	try {
-		apiKey = await authStorage.getApiKey(PROVIDER_NAME);
-	} catch {
-		apiKey = undefined;
-	}
+	let apiKey = getApiKey(PROVIDER_NAME);
 
 	if (!apiKey) {
 		console.warn("[" + PROVIDER_NAME + "] No API key found. Add to ~/.pi/agent/auth.json:", JSON.stringify({ [PROVIDER_NAME]: { type: "api_key", key: "sk-..." } }));
@@ -291,7 +292,7 @@ export default async function (pi: ExtensionAPI) {
 	pi.registerCommand("gonka-refresh", {
 		description: "Refresh Gonka models and pricing",
 		handler: async (_args, ctx) => {
-			const currentKey = await authStorage.getApiKey(PROVIDER_NAME).catch(() => undefined);
+			const currentKey = getApiKey(PROVIDER_NAME);
 			apiKey = currentKey;
 			const newCache = await refreshData(null, apiKey, ctx.signal, true);
 
