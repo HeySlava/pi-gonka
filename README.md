@@ -15,20 +15,13 @@
 
 ## Install
 
-### From npm
+### From GitHub
 
 ```bash
-pi install npm:pi-gonka
+pi install git:github.com/HeySlava/pi-gonka
 ```
 
 ### From a local path
-
-```bash
-cd /path/to/pi-gonka
-pi install -l .
-```
-
-Or install globally:
 
 ```bash
 pi install /path/to/pi-gonka
